@@ -11,14 +11,14 @@
 
 // initialize button states and assign button functions
 void initButtons(void) {
-  for (int i = 0; i < NUM_BUTTONS; i++) {
-#ifndef BUTTON_MATRIX
+  #if NUM_BUTTON_PINS > 0
+  for (int i = 0; i < NUM_BUTTON_PINS; i++) {
     pinMode(buttonPins[i], INPUT_PULLUP);
-#endif
     buttons[i].longPress = false;
     buttons[i].lastchange = 0;
     // note: buttonPressed and buttonClicks are set in deepsleep wake-up stub
   }
+  #endif
 
 #ifdef BUTTON_MATRIX
   for (int i = 0; i < MATRIX_COLS; i++) {
@@ -67,7 +67,7 @@ void initButtons(void) {
 }
 
 bool IRAM_ATTR anyButtonPressed(void) {
-  for (int i = 0; i < NUM_BUTTONS; i++) {
+  for (int i = 0; i < NUM_BUTTON_PINS; i++) {
     if (buttons[i].buttonPressed) return true;
   }
   return false;
@@ -105,7 +105,7 @@ void IRAM_ATTR scanButtonMatrix(void) {
           digitalWrite(rowPins[j], LOW);
           pinMode(rowPins[j], OUTPUT);
           delayMicroseconds(10);  // wait for pin voltage to be stable
-          currentButtonState[i + MATRIX_COLS * j] = digitalRead(columnPins[i]);
+          currentButtonState[NUM_BUTTON_PINS + i + MATRIX_COLS * j] = digitalRead(columnPins[i]);
           pinMode(rowPins[j], INPUT_PULLUP);  // set back to pullup before doing next row
         }
       }
@@ -122,11 +122,15 @@ void IRAM_ATTR scanButtonMatrix(void) {
 #endif
 
 void IRAM_ATTR readButtons() {
+
 #ifdef BUTTON_MATRIX
   scanButtonMatrix();
-#else  // normal buttons
-  for (int i = 0; i < NUM_BUTTONS; i++) {
-    currentButtonState[i] = digitalRead(buttonPins[i]);
-  }
+#endif
+
+// normal buttons
+#if NUM_BUTTON_PINS > 0
+for (int i = 0; i < NUM_BUTTON_PINS; i++) {
+  currentButtonState[i] = digitalRead(buttonPins[i]);
+}
 #endif
 }
